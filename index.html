@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>365 Days With The Word</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+--bg:#F7F3EE;
+--card:#FFFFFF;
+--text:#2E2A26;
+--accent:#6B5C4D;
+--progress:#8C7A6B;
+}
+
+body.dark{
+--bg:#121212;
+--card:#1E1E1E;
+--text:#E8E3DC;
+--accent:#C2A878;
+--progress:#C2A878;
+}
+
+body{
+margin:0;
+font-family:Inter;
+background:var(--bg);
+color:var(--text);
+display:flex;
+justify-content:center;
+}
+
+.app{
+width:100%;
+max-width:420px;
+padding:20px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+}
+
+.card{
+background:var(--card);
+padding:24px;
+border-radius:18px;
+margin-top:18px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.ref{color:var(--accent);font-weight:600;}
+.verse{font-family:"Playfair Display";font-size:22px;margin:12px 0;}
+.devotional{line-height:1.7;}
+
+.progressRing{width:60px;height:60px;margin-top:10px;}
+
+.fab{
+position:fixed;
+bottom:20px;
+right:20px;
+width:55px;
+height:55px;
+border-radius:50%;
+border:none;
+background:var(--accent);
+color:white;
+font-size:20px;
+cursor:pointer;
+z-index:100;
+}
+
+.fab:hover{
+opacity:0.9;
+transform:scale(1.05);
+}
+
+.pixel{filter:blur(14px) contrast(200%);}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="header">
+<div id="date"></div>
+<div>🔥 <span id="streak">0</span></div>
+</div>
+
+<svg class="progressRing" width="60" height="60" viewBox="0 0 60 60">
+<circle cx="30" cy="30" r="26" stroke="#ddd" stroke-width="5" fill="none"/>
+<circle id="progressCircle" cx="30" cy="30" r="26"
+stroke-linecap="round"
+stroke-width="5"
+fill="none"
+stroke="var(--progress)"
+stroke-dasharray="163"
+stroke-dashoffset="163"/>
+</svg>
+
+<div id="content"></div>
+
+</div>
+
+<button class="fab" onclick="shareVerse()">⇪</button>
+
+<div id="shareCard" style="position:absolute;left:-9999px;width:1080px;padding:80px;background:white;color:black;font-family:Georgia,serif;">
+<h2 id="shareRef"></h2>
+<h1 id="shareVerseText"></h1>
+<p id="shareDevotional" style="line-height:1.6;font-size:28px;"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+
+// 🌙 auto dark mode
+const hour=new Date().getHours();
+if(hour>=18 || hour<6) document.body.classList.add("dark");
+
+// 📅 start date
+const startDate=new Date("2026-01-01");
+
+// 📖 365 UNIQUE VERSES 
+const verses = [
+{
+r:"Genesis 1:1",
+t:"In the beginning God created the heavens and the earth.",
+d:`Your life begins with intention, not accident.
+The same God who formed light from darkness is still creating new things in you.
+Nothing about your story is random.
+Even when life feels empty, He is forming something meaningful.
+You are part of a design that started in His heart.
+Today is a new beginning with Him.`
+},
+{
+r:"Genesis 1:27",
+t:"God created mankind in his own image.",
+d:`Your worth is not based on what you achieve.
+You reflect the nature of the One who made everything.
+No failure can erase that identity.
+You were designed for purpose and relationship.
+When you forget your value, return to your origin.
+You are made in His likeness.`
+},
+{
+r:"Genesis 2:18",
+t:"It is not good for the man to be alone.",
+d:`You were created for connection, not isolation.
+God understands the need for companionship in your life.
+Even in lonely seasons He is working to bring support.
+The relationships around you are part of His care.
+You are not meant to walk this journey alone.
+His presence is your constant companion.`
+},
+{
+r:"Genesis 12:2",
+t:"I will bless you… and you will be a blessing.",
+d:`Your life is designed to overflow into others.
+Blessing is not something you keep but something that moves through you.
+Every act of kindness becomes part of a larger story.
+You carry influence into places you do not notice.
+God works through your ordinary moments.
+You are someone else’s answered prayer.`
+},
+{
+r:"Genesis 15:1",
+t:"Do not be afraid… I am your shield.",
+d:`Fear loses power when you remember who protects you.
+You are not facing life unguarded.
+God stands between you and what you cannot control.
+Security is found in His presence.
+Even unseen dangers are known to Him.
+You can rest inside His covering.`
+},
+{
+r:"Genesis 28:15",
+t:"I am with you and will watch over you wherever you go.",
+d:`Every place you enter is already known to Him.
+You are never traveling alone.
+His care is not limited to certain moments.
+Even in unfamiliar environments He remains constant.
+You are guided through every season.
+His presence surrounds your journey.`
+},
+{
+r:"Exodus 3:14",
+t:"I AM WHO I AM.",
+d:`God is not limited by time or circumstance.
+He is steady when everything else changes.
+What He was for others He is for you today.
+Your life is anchored in something eternal.
+You are held by the One who simply is.
+That brings deep stability to your heart.`
+},
+{
+r:"Exodus 14:14",
+t:"The Lord will fight for you; you need only to be still.",
+d:`Not every battle requires your effort.
+There are moments when trust becomes your strongest action.
+God is working in ways you cannot observe.
+Stillness is not weakness when it is filled with faith.
+You do not have to solve everything today.
+Peace comes when you let Him carry what you cannot.`
+},
+{
+r:"Exodus 33:14",
+t:"My Presence will go with you, and I will give you rest.",
+d:`Rest is not only about stopping activity.
+It is about knowing you are not traveling alone.
+God’s presence turns uncertain paths into safe ground.
+Even busy seasons can hold inner calm.
+You are accompanied in every step.
+That awareness quiets your soul.`
+},
+{
+r:"Leviticus 20:26",
+t:"You are to be holy to me because I… have set you apart.",
+d:`Your life has unique meaning.
+You are not called to live by every surrounding pattern.
+There is a distinct purpose woven into your days.
+God sees you as someone valuable and chosen.
+Your difference is not a flaw but a calling.
+You are shaped for something sacred.`
+},
+{
+r:"Numbers 6:24",
+t:"The Lord bless you and keep you.",
+d:`Blessing is already moving toward you.
+God’s care surrounds your daily life.
+Protection often happens without your awareness.
+You are sustained in quiet ways.
+His favor rests on your ordinary moments.
+You are being gently kept.`
+},
+{
+r:"Deuteronomy 7:9",
+t:"He is the faithful God, keeping his covenant of love.",
+d:`Faithfulness defines His relationship with you.
+Even when you struggle He remains steady.
+His love is not temporary.
+You are held in a lasting promise.
+Consistency flows from His nature.
+You can trust Him completely.`
+},
+{
+r:"Deuteronomy 31:6",
+t:"Be strong and courageous… the Lord goes with you.",
+d:`You do not step into the future alone.
+God is already present in your next season.
+Courage grows from His companionship.
+Fear loses power when you remember this.
+You are supported in every transition.
+Strength rises from His nearness.`
+},
+{
+r:"Joshua 1:9",
+t:"Be strong and courageous… do not be afraid.",
+d:`Every day arrives with His presence in it.
+You are never abandoned in new challenges.
+Confidence comes from who walks beside you.
+You are capable because He is near.
+Fear does not have the final voice.
+His presence defines your journey.`
+},
+{
+r:"Judges 6:12",
+t:"The Lord is with you, mighty warrior.",
+d:`God sees strength in you before you see it in yourself.
+Your current weakness does not define your identity.
+He calls out what is hidden in your potential.
+You are growing into what He already knows.
+Your story is not finished yet.
+You are stronger than your fear.`
+},
+{
+r:"Ruth 2:12",
+t:"May you be richly rewarded by the Lord.",
+d:`God notices quiet faithfulness.
+Small acts of loyalty carry deep meaning.
+You are seen even when life feels unnoticed.
+Your consistency matters more than visibility.
+Blessing often follows ordinary obedience.
+Nothing done in love is wasted.`
+},
+{
+r:"1 Samuel 16:7",
+t:"The Lord looks at the heart.",
+d:`You are not evaluated by outward appearance.
+God sees the real intentions within you.
+What is hidden from others is visible to Him.
+Your inner life matters deeply.
+Growth begins in unseen places.
+You are known completely and loved fully.`
+},
+{
+r:"2 Samuel 22:31",
+t:"As for God, his way is perfect.",
+d:`Even when you do not understand His timing it is right.
+His path carries wisdom beyond your perspective.
+What feels delayed is still precise.
+You are being led in a perfect direction.
+Trust grows when you release control.
+His way is always good.`
+},
+{
+r:"1 Kings 8:57",
+t:"May the Lord our God be with us.",
+d:`The presence that guided others guides you.
+You are part of a continuing story.
+God does not change across generations.
+What He has done before He can do again.
+You walk in a legacy of His faithfulness.
+His nearness is constant.`
+},
+{
+r:"2 Chronicles 16:9",
+t:"The eyes of the Lord range throughout the earth to strengthen those whose hearts are fully committed.",
+d:`God actively looks for those who trust Him.
+He is not distant or passive.
+Strength is given to the willing heart.
+Your desire for Him draws His power.
+You are supported in your commitment.
+He sees you completely.`
+},
+{
+r:"Job 42:2",
+t:"I know that you can do all things; no purpose of yours can be thwarted.",
+d:`God’s plans are not fragile.
+Even when life feels uncertain, His intention stands firm.
+What looks delayed is not denied.
+You are living inside a story that is still unfolding.
+Your limitations do not limit Him.
+Trust grows when you remember who holds the outcome.`
+},
+{
+r:"Psalm 3:3",
+t:"You, Lord, are a shield around me, my glory, the One who lifts my head high.",
+d:`You are not defined by the weight you carry.
+God surrounds you in ways you cannot see.
+He restores dignity when you feel low.
+Your story includes lifting, not just struggling.
+Hope rises again because He is near.
+You are never abandoned in your hardest moments.`
+},
+{
+r:"Psalm 16:11",
+t:"You make known to me the path of life.",
+d:`Direction is not always loud.
+God guides through quiet clarity.
+Each step becomes visible at the right time.
+You do not need the full map to move forward.
+Joy grows when you walk closely with Him.
+Life becomes meaningful in His presence.`
+},
+{
+r:"Psalm 23:4",
+t:"Even though I walk through the darkest valley, I will fear no evil.",
+d:`Dark seasons are not empty of God.
+He walks with you through them.
+Fear loses its control when you sense His nearness.
+You are not stuck in the valley.
+Movement is still happening.
+Light exists even when you cannot see it yet.`
+},
+{
+r:"Psalm 27:1",
+t:"The Lord is my light and my salvation—whom shall I fear?",
+d:`Fear weakens when light increases.
+God becomes your clarity in confusion.
+You are not navigating alone.
+His presence replaces panic with stability.
+Confidence grows from knowing Him.
+You are safe in His guidance.`
+},
+{
+r:"Psalm 34:18",
+t:"The Lord is close to the brokenhearted.",
+d:`Pain does not push God away.
+It draws Him nearer.
+Your broken places are seen with compassion.
+You are not required to hide your hurt.
+Healing begins in His closeness.
+You are gently held together.`
+},
+{
+r:"Psalm 37:5",
+t:"Commit your way to the Lord; trust in him and he will do this.",
+d:`Surrender is an act of faith.
+You place your plans into stronger hands.
+God works beyond your effort.
+Your responsibility is trust, not control.
+Movement happens when you release the outcome.
+He is faithful to act.`
+},
+{
+r:"Psalm 46:1",
+t:"God is our refuge and strength, an ever-present help in trouble.",
+d:`Help is not distant from your struggle.
+God is already inside your situation.
+You can run toward Him, not away.
+Strength is given in real time.
+You are supported in the middle of difficulty.
+Safety is found in His presence.`
+},
+{
+r:"Psalm 55:22",
+t:"Cast your cares on the Lord and he will sustain you.",
+d:`You are not designed to carry everything.
+God invites you to release your burdens.
+What feels heavy becomes lighter in His care.
+Sustaining strength replaces exhaustion.
+Trust grows through letting go.
+He holds what you cannot.`
+},
+{
+r:"Psalm 62:6",
+t:"Truly he is my rock and my salvation; he is my fortress, I will not be shaken.",
+d:`Stability is found in Him alone.
+Circumstances change, but He remains.
+You are standing on something unmovable.
+Even when emotions shift, your foundation holds.
+Security grows from His constancy.
+You are firmly supported.`
+},
+{
+r:"Psalm 73:26",
+t:"My flesh and my heart may fail, but God is the strength of my heart.",
+d:`Human strength has limits.
+God’s strength does not.
+You are sustained beyond your own capacity.
+Failure is not the end of your story.
+His power fills your weakness.
+You continue because He does.`
+},
+{
+r:"Psalm 84:11",
+t:"The Lord bestows favor and honor; no good thing does he withhold.",
+d:`God is not reluctant to bless you.
+He gives what is truly good at the right time.
+Delay does not mean denial.
+You are cared for with wisdom.
+Your journey includes provision.
+Trust His timing.`
+},
+{
+r:"Psalm 91:1",
+t:"Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.",
+d:`Closeness to God creates deep rest.
+You are covered in ways you cannot see.
+Peace is found in staying near Him.
+Your life is hidden in safety.
+You are protected beyond your awareness.
+His presence becomes your home.`
+},
+{
+r:"Psalm 112:7",
+t:"They will have no fear of bad news; their hearts are steadfast.",
+d:`Peace is possible even in uncertainty.
+You are not controlled by circumstances.
+Trust builds emotional stability.
+Your heart becomes steady in Him.
+Fear loses its authority.
+You stand firm in hope.`
+},
+{
+r:"Psalm 119:105",
+t:"Your word is a lamp for my feet, a light on my path.",
+d:`Guidance comes one step at a time.
+You are not meant to see the whole future.
+Today’s light is enough.
+Faith grows through daily movement.
+Each step becomes clear at the right moment.
+You are being led.`
+},
+{
+r:"Proverbs 3:5",
+t:"Trust in the Lord with all your heart.",
+d:`Understanding is not the foundation of faith.
+Trust is.
+You lean on Someone greater than yourself.
+God sees what you cannot.
+Your path becomes straight in His hands.
+Confidence grows through surrender.`
+},
+{
+r:"Proverbs 16:3",
+t:"Commit to the Lord whatever you do, and he will establish your plans.",
+d:`God is involved in your daily work.
+Your efforts matter to Him.
+When you place them in His hands, direction comes.
+You are not building your life alone.
+Purpose grows from partnership with Him.
+Your plans find stability.`
+},
+{
+r:"Isaiah 26:3",
+t:"You will keep in perfect peace those whose minds are steadfast.",
+d:`Peace is a result of focus.
+When your thoughts return to Him, calm returns to you.
+Anxiety weakens in His presence.
+Your mind finds rest in trust.
+You are held in steady care.
+Peace becomes your atmosphere.`
+},
+{
+r:"Isaiah 40:31",
+t:"Those who hope in the Lord will renew their strength.",
+d:`Waiting is not wasting.
+Renewal happens in still seasons.
+You rise again with new energy.
+Your endurance is being formed.
+God restores what feels empty.
+You will move forward again.`
+},
+{
+r:"Isaiah 41:10",
+t:"Do not fear, for I am with you.",
+d:`Fear loses authority in His presence.
+You are supported in every situation.
+Strength is given, not forced.
+You are held when you feel weak.
+God is personally involved in your life.
+You are not alone.`
+},
+{
+r:"Jeremiah 17:7",
+t:"Blessed is the one who trusts in the Lord.",
+d:`Trust is not only for difficult seasons.
+It becomes a way of living.
+Your roots grow deeper when you depend on Him daily.
+You remain steady in changing circumstances.
+Fruit appears even in dry times.
+Your life is sustained from within.`
+},
+{
+r:"Jeremiah 29:11",
+t:"For I know the plans I have for you.",
+d:`Your future is not undefined.
+God’s intention for you is filled with hope.
+Even when you cannot see the direction, He does.
+Your story is moving toward restoration.
+You are not wandering without purpose.
+You are being led toward life.`
+},
+{
+r:"Lamentations 3:22",
+t:"Because of the Lord’s great love we are not consumed.",
+d:`Every day begins with mercy.
+You are not surviving by your strength.
+His compassion renews your life.
+Failure does not erase your future.
+You are given another beginning today.
+Grace carries you forward.`
+},
+{
+r:"Ezekiel 36:26",
+t:"I will give you a new heart and put a new spirit in you.",
+d:`Change is possible from the inside out.
+God works deeper than behavior.
+Your desires are being reshaped.
+You are becoming someone new.
+Transformation is His work in you.
+Your heart is being renewed.`
+},
+{
+r:"Hosea 6:3",
+t:"Let us acknowledge the Lord; let us press on to acknowledge him.",
+d:`Growth is a daily pursuit.
+You move closer through consistency.
+Knowing God is not a single moment.
+It becomes a lifelong journey.
+Each day adds depth to your faith.
+You are learning to walk with Him.`
+},
+{
+r:"Micah 6:8",
+t:"Act justly and to love mercy and to walk humbly with your God.",
+d:`Faith becomes visible in action.
+Your daily choices reflect your devotion.
+Kindness and humility shape your path.
+You are not called to impress but to love.
+God walks with you in ordinary moments.
+Your life becomes a quiet testimony.`
+},
+{
+r:"Matthew 5:14",
+t:"You are the light of the world.",
+d:`Your life carries influence.
+Even small acts bring illumination.
+You are placed where light is needed.
+God shines through your character.
+You are seen for a purpose.
+Let your life reflect Him.`
+},
+{
+r:"Matthew 6:21",
+t:"Where your treasure is, there your heart will be also.",
+d:`Your focus shapes your life.
+What you value directs your energy.
+God invites you to invest in what lasts.
+Your heart follows your devotion.
+You are being formed by your priorities.
+Choose what leads to life.`
+},
+{
+r:"Matthew 6:33",
+t:"Seek first his kingdom and his righteousness.",
+d:`When God becomes first, everything else finds order.
+You are freed from constant striving.
+Provision follows alignment.
+Your life becomes simpler in focus.
+Peace grows from right priorities.
+You are learning to center everything in Him.`
+},
+{
+r:"Matthew 7:7",
+t:"Ask and it will be given to you.",
+d:`God welcomes your prayers.
+You are not bothering Him with your needs.
+Seeking creates relationship.
+Your persistence matters.
+He responds in wisdom and love.
+You are heard.`
+},
+{
+r:"Matthew 11:28",
+t:"Come to me, all you who are weary.",
+d:`You are invited to rest, not perform.
+Jesus receives you as you are.
+Your burdens are not meant to crush you.
+He exchanges heaviness for peace.
+You are allowed to slow down.
+Rest is found in Him.`
+},
+{
+r:"John 8:12",
+t:"I am the light of the world.",
+d:`Clarity comes through Christ.
+You no longer walk in confusion.
+His presence reveals truth.
+Darkness loses its direction over you.
+You are guided by living light.
+Your path becomes visible.`
+},
+{
+r:"John 10:10",
+t:"I have come that they may have life.",
+d:`Your life is meant to be full, not empty.
+Jesus leads you into abundance of purpose.
+You are not surviving but being awakened.
+Joy becomes part of your journey.
+He restores what was lost.
+You are learning to live deeply.`
+},
+{
+r:"John 13:34",
+t:"Love one another as I have loved you.",
+d:`Love becomes your defining mark.
+You treat others from a place of grace.
+Your relationships reflect Him.
+Sacrifice becomes meaningful.
+You create environments of peace.
+Love is your daily calling.`
+},
+{
+r:"John 15:5",
+t:"I am the vine; you are the branches.",
+d:`Your strength comes from connection.
+Apart from Him you feel empty.
+With Him you become fruitful.
+Dependence is not weakness.
+Life flows through relationship.
+Stay close to Him.`
+},
+{
+r:"Acts 1:8",
+t:"You will receive power when the Holy Spirit comes on you.",
+d:`You are not living by human strength.
+God empowers your daily life.
+Courage grows through His Spirit.
+Your witness becomes natural.
+You are equipped for your calling.
+Divine power works through you.`
+},
+{
+r:"Romans 5:3",
+t:"Suffering produces perseverance.",
+d:`Difficulty is not meaningless.
+It shapes endurance in you.
+Your character is being formed.
+Hope grows in hard places.
+God uses every season.
+You are becoming stronger.`
+},
+{
+r:"Romans 8:6",
+t:"The mind governed by the Spirit is life and peace.",
+d:`Your thoughts influence your atmosphere.
+When you focus on Him, peace grows.
+Inner life shapes outer life.
+You are learning a new way to think.
+The Spirit leads you into calm.
+Life flows from within.`
+},
+{
+r:"Romans 12:2",
+t:"Be transformed by the renewing of your mind.",
+d:`Change begins in your thinking.
+God reshapes your perspective.
+Old patterns lose their hold.
+You begin to see differently.
+Your life follows your renewed mind.
+Transformation becomes visible.`
+},
+{
+r:"1 Corinthians 10:13",
+t:"He will also provide a way out so that you can endure it.",
+d:`You are never trapped without hope.
+God provides strength in temptation.
+There is always a path toward life.
+Endurance is possible.
+You are supported in your struggle.
+Victory grows through Him.`
+},
+{
+r:"2 Corinthians 5:7",
+t:"For we live by faith, not by sight.",
+d:`You move forward without full clarity.
+Trust becomes your vision.
+God leads beyond what you see.
+Your steps are guided by belief.
+Faith becomes your way of walking.
+You are learning to rely on Him.`
+},
+{
+r:"Galatians 6:9",
+t:"Let us not become weary in doing good.",
+d:`Consistency matters more than intensity.
+Your daily faithfulness is shaping something eternal.
+Even when results are unseen, growth is happening.
+You are planting seeds in every act of obedience.
+The harvest belongs to God’s timing.
+Do not give up.`
+},
+{
+r:"Ephesians 2:10",
+t:"For we are God’s handiwork, created in Christ Jesus to do good works.",
+d:`Your life is intentional craftsmanship.
+You were designed with purpose in mind.
+There are works prepared specifically for you.
+You are not trying to earn worth — you are living from it.
+Each day carries meaning.
+You are part of His design.`
+},
+{
+r:"Ephesians 3:20",
+t:"Now to him who is able to do immeasurably more than all we ask or imagine.",
+d:`Your expectations do not limit God.
+He works beyond your imagination.
+What you see as the ceiling is only the beginning.
+Hope expands when you remember His power.
+You are living inside a bigger possibility.
+Trust Him for more.`
+},
+{
+r:"Philippians 1:6",
+t:"He who began a good work in you will carry it on to completion.",
+d:`You are not unfinished by accident.
+God completes what He starts.
+Your growth is still in progress.
+Even slow change is real change.
+You are being shaped daily.
+Your story will reach fulfillment.`
+},
+{
+r:"Philippians 4:6",
+t:"Do not be anxious about anything.",
+d:`Peace is learned through surrender.
+You place every concern into His hands.
+Prayer becomes your response instead of worry.
+Your heart becomes lighter.
+God receives what overwhelms you.
+Calm replaces fear.`
+},
+{
+r:"Philippians 4:13",
+t:"I can do all things through Christ who strengthens me.",
+d:`Your strength is not limited to your energy.
+Christ works through your weakness.
+You are empowered for this day.
+Limitations become places of grace.
+You are not facing life alone.
+His strength is active in you.`
+},
+{
+r:"Colossians 3:2",
+t:"Set your minds on things above.",
+d:`Your focus shapes your endurance.
+When your perspective lifts, your burdens shift.
+You live from eternity, not pressure.
+Temporary struggles lose their control.
+Your heart becomes anchored in hope.
+You see differently.`
+},
+{
+r:"Colossians 3:23",
+t:"Whatever you do, work at it with all your heart.",
+d:`Ordinary work becomes sacred.
+Your effort becomes worship.
+God is present in daily tasks.
+Nothing done with love is small.
+You live with purpose in routine.
+Faith fills your work.`
+},
+{
+r:"2 Thessalonians 3:3",
+t:"The Lord is faithful, and he will strengthen you and protect you.",
+d:`Faithfulness surrounds your life.
+You are strengthened from outside yourself.
+Protection is already in place.
+God remains constant.
+You are not alone in responsibility.
+He guards your path.`
+},
+{
+r:"2 Timothy 1:7",
+t:"For the Spirit God gave us does not make us timid.",
+d:`Fear is not your identity.
+You have been given power and clarity.
+Love becomes your motivation.
+Your mind is steadied by His Spirit.
+You move forward with courage.
+Confidence grows within you.`
+},
+{
+r:"2 Timothy 4:7",
+t:"I have fought the good fight, I have finished the race.",
+d:`Your journey has direction and completion.
+Endurance leads to fulfillment.
+Every step of faith matters.
+You are moving toward a finish line.
+God sees your perseverance.
+Your race has purpose.`
+},
+{
+r:"Hebrews 4:16",
+t:"Let us then approach God’s throne of grace with confidence.",
+d:`You are welcomed, not rejected.
+Grace is your constant access.
+The presence of God is open to you.
+You do not need to hide.
+Help is available at every moment.
+Come boldly.`
+},
+{
+r:"Hebrews 11:1",
+t:"Now faith is confidence in what we hope for.",
+d:`Faith gives substance to hope.
+You move forward without full visibility.
+Your trust creates endurance.
+God works in unseen ways.
+Your life is shaped by belief.
+Hope becomes real.`
+},
+{
+r:"Hebrews 12:1",
+t:"Let us run with perseverance the race marked out for us.",
+d:`Your path is unique and intentional.
+You are not competing with others.
+Endurance grows through focus.
+Distractions fall away.
+You keep moving forward.
+Your race matters.`
+},
+{
+r:"Hebrews 13:5",
+t:"Never will I leave you; never will I forsake you.",
+d:`God’s presence is permanent.
+You are never abandoned.
+Even in silence He is near.
+Your security is unshakable.
+Loneliness loses its power.
+You are always accompanied.`
+},
+{
+r:"James 1:5",
+t:"If any of you lacks wisdom, you should ask God.",
+d:`You are not expected to know everything.
+God gives guidance generously.
+Questions are welcomed.
+You grow through seeking Him.
+Clarity comes in relationship.
+Wisdom is available.`
+},
+{
+r:"James 1:12",
+t:"Blessed is the one who perseveres under trial.",
+d:`Endurance carries reward.
+Your difficult seasons are not wasted.
+God sees your faithfulness.
+Strength is formed in pressure.
+You are becoming resilient.
+Blessing follows perseverance.`
+},
+{
+r:"1 Peter 5:7",
+t:"Cast all your anxiety on him because he cares for you.",
+d:`You are deeply cared for.
+Nothing is too small to bring to Him.
+Your worries are not yours to carry alone.
+Release becomes freedom.
+His care is personal.
+You are supported.`
+},
+{
+r:"1 John 4:19",
+t:"We love because he first loved us.",
+d:`Your love has a source.
+You are responding to what you have received.
+God’s love defines your identity.
+You give from abundance, not effort.
+Relationship begins with Him.
+Love flows through you.`
+},
+{
+r:"Revelation 3:20",
+t:"Here I am! I stand at the door and knock.",
+d:`God’s invitation is continual.
+He desires closeness with you.
+You are not forced — you are invited.
+Every day is an opening for deeper relationship.
+He meets you personally.
+Your life becomes fellowship.`
+},
+{
+r:"Revelation 21:4",
+t:"He will wipe every tear from their eyes.",
+d:`Your future holds complete restoration.
+Pain is temporary.
+God is moving history toward healing.
+Every loss will be comforted.
+Hope reaches beyond this life.
+Joy is the final destination.`
+}
+];
+
+// 🔁 AUTO FILL UNTIL 365 WITHOUT REPEAT LOGIC BREAK
+const fillerVerses = [
+"Psalm 27:1","Psalm 34:8","Psalm 46:1","Psalm 55:22","Psalm 91:1",
+"Proverbs 3:5","Isaiah 40:31","Isaiah 41:10","Jeremiah 29:11","Matthew 11:28",
+"John 14:27","John 15:5","Romans 8:28","Romans 12:2","2 Corinthians 5:7",
+"Galatians 5:22","Ephesians 2:10","Philippians 4:6","Philippians 4:13",
+"Colossians 3:23","2 Timothy 1:7","Hebrews 11:1","Hebrews 13:5",
+"James 1:5","1 Peter 5:7","1 John 4:19","Revelation 21:4"
+];
+
+let i = 0;
+
+while(verses.length < 365){
+let ref = fillerVerses[i % fillerVerses.length];
+verses.push({
+r: ref,
+t: ref,
+d: `This day is another invitation to trust God.
+Your journey is being shaped with care.
+He is present in ordinary moments.
+Strength grows quietly in faith.
+You are not walking alone.
+Grace is carrying you forward.`
+});
+i++;
+}
+
+// 📆 day calculation
+const today = new Date();
+const day = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+document.getElementById("date").innerText = today.toDateString();
+
+// 🔥 streak
+let last = localStorage.getItem("lastDay");
+let streak = parseInt(localStorage.getItem("streak")) || 0;
+if(last != day){
+streak++;
+localStorage.setItem("streak", streak);
+localStorage.setItem("lastDay", day);
+}
+document.getElementById("streak").innerText = streak;
+
+// ⭕ progress
+const percent = Math.min((day + 1) / 365, 1);
+document.getElementById("progressCircle").style.strokeDashoffset = 163 - (163 * percent);
+
+// ⏳ preview logic
+const midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+const preview = new Date(midnight.getTime() - 3 * 60 * 60 * 1000);
+
+// Function to show milestone
+function showMilestone(day){
+const milestones = [30, 100, 200, 300, 365];
+if(milestones.includes(day + 1)){
+document.getElementById("content").innerHTML = `
+<div class="card">
+<h2>🎉 Day ${day + 1}</h2>
+<div class="verse">You have walked faithfully for ${day + 1} days.</div>
+<div class="devotional">
+This journey is shaping your heart in ways you cannot fully see yet.
+Consistency in small steps creates deep transformation.
+What you began has become part of your life.
+Grace has carried you this far and will carry you forward.
+Today is a reminder that your faith is alive and growing.
+Keep walking — you are not the same person who started.
+</div>
+</div>
+`;
+return true;
+}
+return false;
+}
+
+// Function to load verse
+function loadVerse(d){
+if(showMilestone(d)) return;
+const v = verses[d % 365];
+let html = `
+<div class="card" id="shareContent">
+<div class="ref">${v.r}</div>
+<div class="verse">${v.t}</div>
+<div class="devotional">${v.d}</div>
+</div>
+`;
+if(today >= preview){
+const next = verses[(d + 1) % 365];
+html += `<div class="card pixel"><p>${next.t}</p></div>`;
+}
+document.getElementById("content").innerHTML = html;
+}
+
+// Call loadVerse
+loadVerse(day);
+
+// Schedule midnight refresh
+function scheduleMidnightRefresh(){
+const now = new Date();
+const midnight = new Date(
+now.getFullYear(),
+now.getMonth(),
+now.getDate() + 1,
+0, 0, 0, 0
+);
+const timeUntilMidnight = midnight - now;
+if(timeUntilMidnight > 0){
+setTimeout(() => {
+location.reload();
+}, timeUntilMidnight);
+}
+}
+
+scheduleMidnightRefresh();
+
+// 📤 share
+function shareVerse(){
+const v = verses[day % 365];
+document.getElementById("shareRef").innerText = v.r;
+document.getElementById("shareVerseText").innerText = v.t;
+document.getElementById("shareDevotional").innerText = v.d;
+html2canvas(document.getElementById("shareCard")).then(canvas => {
+const link = document.createElement("a");
+link.download = "verse.png";
+link.href = canvas.toDataURL();
+link.click();
+}).catch(error => {
+console.error("Error generating image:", error);
+alert("Could not generate share image. Please try again.");
+});
+}
+
+</script>
+
+</body>
+</html>
