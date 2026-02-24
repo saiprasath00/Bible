@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>365 Days With The Word</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#F7F3EE;
+--card:#FFFFFF;
+--text:#2E2A26;
+--accent:#6B5C4D;
+--progress:#8C7A6B;
+--button-hover:#5a4c3f;
+}
+
+body.dark{
+--bg:#121212;
+--card:#1E1E1E;
+--text:#E8E3DC;
+--accent:#C2A878;
+--progress:#C2A878;
+--button-hover:#a08b60;
+}
+
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:var(--bg);
+color:var(--text);
+display:flex;
+justify-content:center;
+transition:background 0.3s, color 0.3s;
+}
+
+.app{
+width:100%;
+max-width:420px;
+padding:20px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+}
+
+.card{
+background:var(--card);
+padding:24px;
+border-radius:18px;
+margin-top:18px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+transition:background 0.3s;
+}
+
+.ref{
+color:var(--accent);
+font-weight:600;
+letter-spacing:0.5px;
+}
+
+.verse{
+font-family:'Playfair Display',serif;
+font-size:22px;
+margin:12px 0;
+line-height:1.4;
+}
+
+.devotional{
+line-height:1.7;
+opacity:0.9;
+}
+
+.progressRing{
+width:60px;
+height:60px;
+margin-top:5px;
+}
+
+.fab{
+position:fixed;
+bottom:20px;
+right:20px;
+width:55px;
+height:55px;
+border-radius:50%;
+border:none;
+background:var(--accent);
+color:white;
+font-size:20px;
+cursor:pointer;
+z-index:100;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+transition:transform 0.2s, background 0.3s;
+}
+
+.fab:hover{
+transform:scale(1.05);
+background:var(--button-hover);
+}
+
+.pixel{
+filter:blur(14px) contrast(200%);
+user-select:none;
+}
+
+.nav-buttons{
+display:flex;
+justify-content:space-between;
+gap:8px;
+margin-top:20px;
+}
+
+.nav-btn{
+flex:1;
+background:var(--card);
+border:1px solid var(--accent);
+color:var(--text);
+padding:10px 0;
+border-radius:30px;
+font-weight:500;
+cursor:pointer;
+transition:all 0.2s;
+font-size:14px;
+}
+
+.nav-btn:hover{
+background:var(--accent);
+color:white;
+}
+
+.nav-btn.today-btn{
+background:var(--accent);
+color:white;
+border:1px solid var(--accent);
+}
+
+.nav-btn.today-btn:hover{
+background:var(--button-hover);
+}
+
+.view-indicator{
+text-align:center;
+font-size:13px;
+margin-top:12px;
+color:var(--accent);
+font-weight:500;
+opacity:0.8;
+}
+
+.hidden{
+display:none;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<div class="header">
+<div id="date"></div>
+<div>🔥 <span id="streak">0</span></div>
+</div>
+
+<svg class="progressRing" width="60" height="60" viewBox="0 0 60 60">
+<circle cx="30" cy="30" r="26" stroke="#ddd" stroke-width="5" fill="none"/>
+<circle id="progressCircle" cx="30" cy="30" r="26"
+stroke-linecap="round"
+stroke-width="5"
+fill="none"
+stroke="var(--progress)"
+stroke-dasharray="163"
+stroke-dashoffset="163"/>
+</svg>
+
+<!-- main content area -->
+<div id="content"></div>
+
+<!-- navigation buttons -->
+<div class="nav-buttons">
+<button class="nav-btn" id="yesterdayBtn">← Yesterday</button>
+<button class="nav-btn today-btn" id="todayBtn">Today</button>
+<button class="nav-btn" id="tomorrowBtn">Tomorrow →</button>
+</div>
+
+<!-- small indicator when viewing another day -->
+<div id="viewIndicator" class="view-indicator hidden"></div>
+
+</div>
+
+<button class="fab" onclick="shareVerse()">⇪</button>
+
+<!-- hidden card for sharing -->
+<div id="shareCard" style="position:absolute;left:-9999px;width:1080px;padding:80px;background:white;color:black;font-family:Georgia,serif;">
+<h2 id="shareRef"></h2>
+<h1 id="shareVerseText"></h1>
+<p id="shareDevotional" style="line-height:1.6;font-size:28px;"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// 🌙 auto dark mode
+(function() {
+const hour = new Date().getHours();
+if (hour >= 18 || hour < 6) document.body.classList.add('dark');
+})();
+
+// 📅 start date
+const startDate = new Date('2026-01-01');
+
+// ---------- VERSE DATABASE (first 87 unique verses, then filler up to 365) ----------
+const verses = [
+  { r: 'Genesis 1:1', t: 'In the beginning God created the heavens and the earth.', d: 'Your life begins with intention, not accident.\nThe same God who formed light from darkness is still creating new things in you.\nNothing about your story is random.\nEven when life feels empty, He is forming something meaningful.\nYou are part of a design that started in His heart.\nToday is a new beginning with Him.' },
+  { r: 'Genesis 1:27', t: 'God created mankind in his own image.', d: 'Your worth is not based on what you achieve.\nYou reflect the nature of the One who made everything.\nNo failure can erase that identity.\nYou were designed for purpose and relationship.\nWhen you forget your value, return to your origin.\nYou are made in His likeness.' },
+  { r: 'Genesis 2:18', t: 'It is not good for the man to be alone.', d: 'You were created for connection, not isolation.\nGod understands the need for companionship in your life.\nEven in lonely seasons He is working to bring support.\nThe relationships around you are part of His care.\nYou are not meant to walk this journey alone.\nHis presence is your constant companion.' },
+  { r: 'Genesis 12:2', t: 'I will bless you… and you will be a blessing.', d: 'Your life is designed to overflow into others.\nBlessing is not something you keep but something that moves through you.\nEvery act of kindness becomes part of a larger story.\nYou carry influence into places you do not notice.\nGod works through your ordinary moments.\nYou are someone else’s answered prayer.' },
+  { r: 'Genesis 15:1', t: 'Do not be afraid… I am your shield.', d: 'Fear loses power when you remember who protects you.\nYou are not facing life unguarded.\nGod stands between you and what you cannot control.\nSecurity is found in His presence.\nEven unseen dangers are known to Him.\nYou can rest inside His covering.' },
+  { r: 'Genesis 28:15', t: 'I am with you and will watch over you wherever you go.', d: 'Every place you enter is already known to Him.\nYou are never traveling alone.\nHis care is not limited to certain moments.\nEven in unfamiliar environments He remains constant.\nYou are guided through every season.\nHis presence surrounds your journey.' },
+  { r: 'Exodus 3:14', t: 'I AM WHO I AM.', d: 'God is not limited by time or circumstance.\nHe is steady when everything else changes.\nWhat He was for others He is for you today.\nYour life is anchored in something eternal.\nYou are held by the One who simply is.\nThat brings deep stability to your heart.' },
+  { r: 'Exodus 14:14', t: 'The Lord will fight for you; you need only to be still.', d: 'Not every battle requires your effort.\nThere are moments when trust becomes your strongest action.\nGod is working in ways you cannot observe.\nStillness is not weakness when it is filled with faith.\nYou do not have to solve everything today.\nPeace comes when you let Him carry what you cannot.' },
+  { r: 'Exodus 33:14', t: 'My Presence will go with you, and I will give you rest.', d: 'Rest is not only about stopping activity.\nIt is about knowing you are not traveling alone.\nGod’s presence turns uncertain paths into safe ground.\nEven busy seasons can hold inner calm.\nYou are accompanied in every step.\nThat awareness quiets your soul.' },
+  { r: 'Leviticus 20:26', t: 'You are to be holy to me because I… have set you apart.', d: 'Your life has unique meaning.\nYou are not called to live by every surrounding pattern.\nThere is a distinct purpose woven into your days.\nGod sees you as someone valuable and chosen.\nYour difference is not a flaw but a calling.\nYou are shaped for something sacred.' },
+  { r: 'Numbers 6:24', t: 'The Lord bless you and keep you.', d: 'Blessing is already moving toward you.\nGod’s care surrounds your daily life.\nProtection often happens without your awareness.\nYou are sustained in quiet ways.\nHis favor rests on your ordinary moments.\nYou are being gently kept.' },
+  { r: 'Deuteronomy 7:9', t: 'He is the faithful God, keeping his covenant of love.', d: 'Faithfulness defines His relationship with you.\nEven when you struggle He remains steady.\nHis love is not temporary.\nYou are held in a lasting promise.\nConsistency flows from His nature.\nYou can trust Him completely.' },
+  { r: 'Deuteronomy 31:6', t: 'Be strong and courageous… the Lord goes with you.', d: 'You do not step into the future alone.\nGod is already present in your next season.\nCourage grows from His companionship.\nFear loses power when you remember this.\nYou are supported in every transition.\nStrength rises from His nearness.' },
+  { r: 'Joshua 1:9', t: 'Be strong and courageous… do not be afraid.', d: 'Every day arrives with His presence in it.\nYou are never abandoned in new challenges.\nConfidence comes from who walks beside you.\nYou are capable because He is near.\nFear does not have the final voice.\nHis presence defines your journey.' },
+  { r: 'Judges 6:12', t: 'The Lord is with you, mighty warrior.', d: 'God sees strength in you before you see it in yourself.\nYour current weakness does not define your identity.\nHe calls out what is hidden in your potential.\nYou are growing into what He already knows.\nYour story is not finished yet.\nYou are stronger than your fear.' },
+  { r: 'Ruth 2:12', t: 'May you be richly rewarded by the Lord.', d: 'God notices quiet faithfulness.\nSmall acts of loyalty carry deep meaning.\nYou are seen even when life feels unnoticed.\nYour consistency matters more than visibility.\nBlessing often follows ordinary obedience.\nNothing done in love is wasted.' },
+  { r: '1 Samuel 16:7', t: 'The Lord looks at the heart.', d: 'You are not evaluated by outward appearance.\nGod sees the real intentions within you.\nWhat is hidden from others is visible to Him.\nYour inner life matters deeply.\nGrowth begins in unseen places.\nYou are known completely and loved fully.' },
+  { r: '2 Samuel 22:31', t: 'As for God, his way is perfect.', d: 'Even when you do not understand His timing it is right.\nHis path carries wisdom beyond your perspective.\nWhat feels delayed is still precise.\nYou are being led in a perfect direction.\nTrust grows when you release control.\nHis way is always good.' },
+  { r: '1 Kings 8:57', t: 'May the Lord our God be with us.', d: 'The presence that guided others guides you.\nYou are part of a continuing story.\nGod does not change across generations.\nWhat He has done before He can do again.\nYou walk in a legacy of His faithfulness.\nHis nearness is constant.' },
+  { r: '2 Chronicles 16:9', t: 'The eyes of the Lord range throughout the earth to strengthen those whose hearts are fully committed.', d: 'God actively looks for those who trust Him.\nHe is not distant or passive.\nStrength is given to the willing heart.\nYour desire for Him draws His power.\nYou are supported in your commitment.\nHe sees you completely.' },
+  { r: 'Job 42:2', t: 'I know that you can do all things; no purpose of yours can be thwarted.', d: 'God’s plans are not fragile.\nEven when life feels uncertain, His intention stands firm.\nWhat looks delayed is not denied.\nYou are living inside a story that is still unfolding.\nYour limitations do not limit Him.\nTrust grows when you remember who holds the outcome.' },
+  { r: 'Psalm 3:3', t: 'You, Lord, are a shield around me, my glory, the One who lifts my head high.', d: 'You are not defined by the weight you carry.\nGod surrounds you in ways you cannot see.\nHe restores dignity when you feel low.\nYour story includes lifting, not just struggling.\nHope rises again because He is near.\nYou are never abandoned in your hardest moments.' },
+  { r: 'Psalm 16:11', t: 'You make known to me the path of life.', d: 'Direction is not always loud.\nGod guides through quiet clarity.\nEach step becomes visible at the right time.\nYou do not need the full map to move forward.\nJoy grows when you walk closely with Him.\nLife becomes meaningful in His presence.' },
+  { r: 'Psalm 23:4', t: 'Even though I walk through the darkest valley, I will fear no evil.', d: 'Dark seasons are not empty of God.\nHe walks with you through them.\nFear loses its control when you sense His nearness.\nYou are not stuck in the valley.\nMovement is still happening.\nLight exists even when you cannot see it yet.' },
+  { r: 'Psalm 27:1', t: 'The Lord is my light and my salvation—whom shall I fear?', d: 'Fear weakens when light increases.\nGod becomes your clarity in confusion.\nYou are not navigating alone.\nHis presence replaces panic with stability.\nConfidence grows from knowing Him.\nYou are safe in His guidance.' },
+  { r: 'Psalm 34:18', t: 'The Lord is close to the brokenhearted.', d: 'Pain does not push God away.\nIt draws Him nearer.\nYour broken places are seen with compassion.\nYou are not required to hide your hurt.\nHealing begins in His closeness.\nYou are gently held together.' },
+  { r: 'Psalm 37:5', t: 'Commit your way to the Lord; trust in him and he will do this.', d: 'Surrender is an act of faith.\nYou place your plans into stronger hands.\nGod works beyond your effort.\nYour responsibility is trust, not control.\nMovement happens when you release the outcome.\nHe is faithful to act.' },
+  { r: 'Psalm 46:1', t: 'God is our refuge and strength, an ever-present help in trouble.', d: 'Help is not distant from your struggle.\nGod is already inside your situation.\nYou can run toward Him, not away.\nStrength is given in real time.\nYou are supported in the middle of difficulty.\nSafety is found in His presence.' },
+  { r: 'Psalm 55:22', t: 'Cast your cares on the Lord and he will sustain you.', d: 'You are not designed to carry everything.\nGod invites you to release your burdens.\nWhat feels heavy becomes lighter in His care.\nSustaining strength replaces exhaustion.\nTrust grows through letting go.\nHe holds what you cannot.' },
+  { r: 'Psalm 62:6', t: 'Truly he is my rock and my salvation; he is my fortress, I will not be shaken.', d: 'Stability is found in Him alone.\nCircumstances change, but He remains.\nYou are standing on something unmovable.\nEven when emotions shift, your foundation holds.\nSecurity grows from His constancy.\nYou are firmly supported.' },
+  { r: 'Psalm 73:26', t: 'My flesh and my heart may fail, but God is the strength of my heart.', d: 'Human strength has limits.\nGod’s strength does not.\nYou are sustained beyond your own capacity.\nFailure is not the end of your story.\nHis power fills your weakness.\nYou continue because He does.' },
+  { r: 'Psalm 84:11', t: 'The Lord bestows favor and honor; no good thing does he withhold.', d: 'God is not reluctant to bless you.\nHe gives what is truly good at the right time.\nDelay does not mean denial.\nYou are cared for with wisdom.\nYour journey includes provision.\nTrust His timing.' },
+  { r: 'Psalm 91:1', t: 'Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.', d: 'Closeness to God creates deep rest.\nYou are covered in ways you cannot see.\nPeace is found in staying near Him.\nYour life is hidden in safety.\nYou are protected beyond your awareness.\nHis presence becomes your home.' },
+  { r: 'Psalm 112:7', t: 'They will have no fear of bad news; their hearts are steadfast.', d: 'Peace is possible even in uncertainty.\nYou are not controlled by circumstances.\nTrust builds emotional stability.\nYour heart becomes steady in Him.\nFear loses its authority.\nYou stand firm in hope.' },
+  { r: 'Psalm 119:105', t: 'Your word is a lamp for my feet, a light on my path.', d: 'Guidance comes one step at a time.\nYou are not meant to see the whole future.\nToday’s light is enough.\nFaith grows through daily movement.\nEach step becomes clear at the right moment.\nYou are being led.' },
+  { r: 'Proverbs 3:5', t: 'Trust in the Lord with all your heart.', d: 'Understanding is not the foundation of faith.\nTrust is.\nYou lean on Someone greater than yourself.\nGod sees what you cannot.\nYour path becomes straight in His hands.\nConfidence grows through surrender.' },
+  { r: 'Proverbs 16:3', t: 'Commit to the Lord whatever you do, and he will establish your plans.', d: 'God is involved in your daily work.\nYour efforts matter to Him.\nWhen you place them in His hands, direction comes.\nYou are not building your life alone.\nPurpose grows from partnership with Him.\nYour plans find stability.' },
+  { r: 'Isaiah 26:3', t: 'You will keep in perfect peace those whose minds are steadfast.', d: 'Peace is a result of focus.\nWhen your thoughts return to Him, calm returns to you.\nAnxiety weakens in His presence.\nYour mind finds rest in trust.\nYou are held in steady care.\nPeace becomes your atmosphere.' },
+  { r: 'Isaiah 40:31', t: 'Those who hope in the Lord will renew their strength.', d: 'Waiting is not wasting.\nRenewal happens in still seasons.\nYou rise again with new energy.\nYour endurance is being formed.\nGod restores what feels empty.\nYou will move forward again.' },
+  { r: 'Isaiah 41:10', t: 'Do not fear, for I am with you.', d: 'Fear loses authority in His presence.\nYou are supported in every situation.\nStrength is given, not forced.\nYou are held when you feel weak.\nGod is personally involved in your life.\nYou are not alone.' },
+  { r: 'Jeremiah 17:7', t: 'Blessed is the one who trusts in the Lord.', d: 'Trust is not only for difficult seasons.\nIt becomes a way of living.\nYour roots grow deeper when you depend on Him daily.\nYou remain steady in changing circumstances.\nFruit appears even in dry times.\nYour life is sustained from within.' },
+  { r: 'Jeremiah 29:11', t: 'For I know the plans I have for you.', d: 'Your future is not undefined.\nGod’s intention for you is filled with hope.\nEven when you cannot see the direction, He does.\nYour story is moving toward restoration.\nYou are not wandering without purpose.\nYou are being led toward life.' },
+  { r: 'Lamentations 3:22', t: 'Because of the Lord’s great love we are not consumed.', d: 'Every day begins with mercy.\nYou are not surviving by your strength.\nHis compassion renews your life.\nFailure does not erase your future.\nYou are given another beginning today.\nGrace carries you forward.' },
+  { r: 'Ezekiel 36:26', t: 'I will give you a new heart and put a new spirit in you.', d: 'Change is possible from the inside out.\nGod works deeper than behavior.\nYour desires are being reshaped.\nYou are becoming someone new.\nTransformation is His work in you.\nYour heart is being renewed.' },
+  { r: 'Hosea 6:3', t: 'Let us acknowledge the Lord; let us press on to acknowledge him.', d: 'Growth is a daily pursuit.\nYou move closer through consistency.\nKnowing God is not a single moment.\nIt becomes a lifelong journey.\nEach day adds depth to your faith.\nYou are learning to walk with Him.' },
+  { r: 'Micah 6:8', t: 'Act justly and to love mercy and to walk humbly with your God.', d: 'Faith becomes visible in action.\nYour daily choices reflect your devotion.\nKindness and humility shape your path.\nYou are not called to impress but to love.\nGod walks with you in ordinary moments.\nYour life becomes a quiet testimony.' },
+  { r: 'Matthew 5:14', t: 'You are the light of the world.', d: 'Your life carries influence.\nEven small acts bring illumination.\nYou are placed where light is needed.\nGod shines through your character.\nYou are seen for a purpose.\nLet your life reflect Him.' },
+  { r: 'Matthew 6:21', t: 'Where your treasure is, there your heart will be also.', d: 'Your focus shapes your life.\nWhat you value directs your energy.\nGod invites you to invest in what lasts.\nYour heart follows your devotion.\nYou are being formed by your priorities.\nChoose what leads to life.' },
+  { r: 'Matthew 6:33', t: 'Seek first his kingdom and his righteousness.', d: 'When God becomes first, everything else finds order.\nYou are freed from constant striving.\nProvision follows alignment.\nYour life becomes simpler in focus.\nPeace grows from right priorities.\nYou are learning to center everything in Him.' },
+  { r: 'Matthew 7:7', t: 'Ask and it will be given to you.', d: 'God welcomes your prayers.\nYou are not bothering Him with your needs.\nSeeking creates relationship.\nYour persistence matters.\nHe responds in wisdom and love.\nYou are heard.' },
+  { r: 'Matthew 11:28', t: 'Come to me, all you who are weary.', d: 'You are invited to rest, not perform.\nJesus receives you as you are.\nYour burdens are not meant to crush you.\nHe exchanges heaviness for peace.\nYou are allowed to slow down.\nRest is found in Him.' },
+  { r: 'John 8:12', t: 'I am the light of the world.', d: 'Clarity comes through Christ.\nYou no longer walk in confusion.\nHis presence reveals truth.\nDarkness loses its direction over you.\nYou are guided by living light.\nYour path becomes visible.' },
+  { r: 'John 10:10', t: 'I have come that they may have life.', d: 'Your life is meant to be full, not empty.\nJesus leads you into abundance of purpose.\nYou are not surviving but being awakened.\nJoy becomes part of your journey.\nHe restores what was lost.\nYou are learning to live deeply.' },
+  { r: 'John 13:34', t: 'Love one another as I have loved you.', d: 'Love becomes your defining mark.\nYou treat others from a place of grace.\nYour relationships reflect Him.\nSacrifice becomes meaningful.\nYou create environments of peace.\nLove is your daily calling.' },
+  { r: 'John 15:5', t: 'I am the vine; you are the branches.', d: 'Your strength comes from connection.\nApart from Him you feel empty.\nWith Him you become fruitful.\nDependence is not weakness.\nLife flows through relationship.\nStay close to Him.' },
+  { r: 'Acts 1:8', t: 'You will receive power when the Holy Spirit comes on you.', d: 'You are not living by human strength.\nGod empowers your daily life.\nCourage grows through His Spirit.\nYour witness becomes natural.\nYou are equipped for your calling.\nDivine power works through you.' },
+  { r: 'Romans 5:3', t: 'Suffering produces perseverance.', d: 'Difficulty is not meaningless.\nIt shapes endurance in you.\nYour character is being formed.\nHope grows in hard places.\nGod uses every season.\nYou are becoming stronger.' },
+  { r: 'Romans 8:6', t: 'The mind governed by the Spirit is life and peace.', d: 'Your thoughts influence your atmosphere.\nWhen you focus on Him, peace grows.\nInner life shapes outer life.\nYou are learning a new way to think.\nThe Spirit leads you into calm.\nLife flows from within.' },
+  { r: 'Romans 12:2', t: 'Be transformed by the renewing of your mind.', d: 'Change begins in your thinking.\nGod reshapes your perspective.\nOld patterns lose their hold.\nYou begin to see differently.\nYour life follows your renewed mind.\nTransformation becomes visible.' },
+  { r: '1 Corinthians 10:13', t: 'He will also provide a way out so that you can endure it.', d: 'You are never trapped without hope.\nGod provides strength in temptation.\nThere is always a path toward life.\nEndurance is possible.\nYou are supported in your struggle.\nVictory grows through Him.' },
+  { r: '2 Corinthians 5:7', t: 'For we live by faith, not by sight.', d: 'You move forward without full clarity.\nTrust becomes your vision.\nGod leads beyond what you see.\nYour steps are guided by belief.\nFaith becomes your way of walking.\nYou are learning to rely on Him.' },
+  { r: 'Galatians 6:9', t: 'Let us not become weary in doing good.', d: 'Consistency matters more than intensity.\nYour daily faithfulness is shaping something eternal.\nEven when results are unseen, growth is happening.\nYou are planting seeds in every act of obedience.\nThe harvest belongs to God’s timing.\nDo not give up.' },
+  { r: 'Ephesians 2:10', t: 'For we are God’s handiwork, created in Christ Jesus to do good works.', d: 'Your life is intentional craftsmanship.\nYou were designed with purpose in mind.\nThere are works prepared specifically for you.\nYou are not trying to earn worth — you are living from it.\nEach day carries meaning.\nYou are part of His design.' },
+  { r: 'Ephesians 3:20', t: 'Now to him who is able to do immeasurably more than all we ask or imagine.', d: 'Your expectations do not limit God.\nHe works beyond your imagination.\nWhat you see as the ceiling is only the beginning.\nHope expands when you remember His power.\nYou are living inside a bigger possibility.\nTrust Him for more.' },
+  { r: 'Philippians 1:6', t: 'He who began a good work in you will carry it on to completion.', d: 'You are not unfinished by accident.\nGod completes what He starts.\nYour growth is still in progress.\nEven slow change is real change.\nYou are being shaped daily.\nYour story will reach fulfillment.' },
+  { r: 'Philippians 4:6', t: 'Do not be anxious about anything.', d: 'Peace is learned through surrender.\nYou place every concern into His hands.\nPrayer becomes your response instead of worry.\nYour heart becomes lighter.\nGod receives what overwhelms you.\nCalm replaces fear.' },
+  { r: 'Philippians 4:13', t: 'I can do all things through Christ who strengthens me.', d: 'Your strength is not limited to your energy.\nChrist works through your weakness.\nYou are empowered for this day.\nLimitations become places of grace.\nYou are not facing life alone.\nHis strength is active in you.' },
+  { r: 'Colossians 3:2', t: 'Set your minds on things above.', d: 'Your focus shapes your endurance.\nWhen your perspective lifts, your burdens shift.\nYou live from eternity, not pressure.\nTemporary struggles lose their control.\nYour heart becomes anchored in hope.\nYou see differently.' },
+  { r: 'Colossians 3:23', t: 'Whatever you do, work at it with all your heart.', d: 'Ordinary work becomes sacred.\nYour effort becomes worship.\nGod is present in daily tasks.\nNothing done with love is small.\nYou live with purpose in routine.\nFaith fills your work.' },
+  { r: '2 Thessalonians 3:3', t: 'The Lord is faithful, and he will strengthen you and protect you.', d: 'Faithfulness surrounds your life.\nYou are strengthened from outside yourself.\nProtection is already in place.\nGod remains constant.\nYou are not alone in responsibility.\nHe guards your path.' },
+  { r: '2 Timothy 1:7', t: 'For the Spirit God gave us does not make us timid.', d: 'Fear is not your identity.\nYou have been given power and clarity.\nLove becomes your motivation.\nYour mind is steadied by His Spirit.\nYou move forward with courage.\nConfidence grows within you.' },
+  { r: '2 Timothy 4:7', t: 'I have fought the good fight, I have finished the race.', d: 'Your journey has direction and completion.\nEndurance leads to fulfillment.\nEvery step of faith matters.\nYou are moving toward a finish line.\nGod sees your perseverance.\nYour race has purpose.' },
+  { r: 'Hebrews 4:16', t: 'Let us then approach God’s throne of grace with confidence.', d: 'You are welcomed, not rejected.\nGrace is your constant access.\nThe presence of God is open to you.\nYou do not need to hide.\nHelp is available at every moment.\nCome boldly.' },
+  { r: 'Hebrews 11:1', t: 'Now faith is confidence in what we hope for.', d: 'Faith gives substance to hope.\nYou move forward without full visibility.\nYour trust creates endurance.\nGod works in unseen ways.\nYour life is shaped by belief.\nHope becomes real.' },
+  { r: 'Hebrews 12:1', t: 'Let us run with perseverance the race marked out for us.', d: 'Your path is unique and intentional.\nYou are not competing with others.\nEndurance grows through focus.\nDistractions fall away.\nYou keep moving forward.\nYour race matters.' },
+  { r: 'Hebrews 13:5', t: 'Never will I leave you; never will I forsake you.', d: 'God’s presence is permanent.\nYou are never abandoned.\nEven in silence He is near.\nYour security is unshakable.\nLoneliness loses its power.\nYou are always accompanied.' },
+  { r: 'James 1:5', t: 'If any of you lacks wisdom, you should ask God.', d: 'You are not expected to know everything.\nGod gives guidance generously.\nQuestions are welcomed.\nYou grow through seeking Him.\nClarity comes in relationship.\nWisdom is available.' },
+  { r: 'James 1:12', t: 'Blessed is the one who perseveres under trial.', d: 'Endurance carries reward.\nYour difficult seasons are not wasted.\nGod sees your faithfulness.\nStrength is formed in pressure.\nYou are becoming resilient.\nBlessing follows perseverance.' },
+  { r: '1 Peter 5:7', t: 'Cast all your anxiety on him because he cares for you.', d: 'You are deeply cared for.\nNothing is too small to bring to Him.\nYour worries are not yours to carry alone.\nRelease becomes freedom.\nHis care is personal.\nYou are supported.' },
+  { r: '1 John 4:19', t: 'We love because he first loved us.', d: 'Your love has a source.\nYou are responding to what you have received.\nGod’s love defines your identity.\nYou give from abundance, not effort.\nRelationship begins with Him.\nLove flows through you.' },
+  { r: 'Revelation 3:20', t: 'Here I am! I stand at the door and knock.', d: 'God’s invitation is continual.\nHe desires closeness with you.\nYou are not forced — you are invited.\nEvery day is an opening for deeper relationship.\nHe meets you personally.\nYour life becomes fellowship.' },
+  { r: 'Revelation 21:4', t: 'He will wipe every tear from their eyes.', d: 'Your future holds complete restoration.\nPain is temporary.\nGod is moving history toward healing.\nEvery loss will be comforted.\nHope reaches beyond this life.\nJoy is the final destination.' }
+];
+
+// Filler verses to reach 365
+const fillerVerses = [
+  'Psalm 27:1','Psalm 34:8','Psalm 46:1','Psalm 55:22','Psalm 91:1',
+  'Proverbs 3:5','Isaiah 40:31','Isaiah 41:10','Jeremiah 29:11','Matthew 11:28',
+  'John 14:27','John 15:5','Romans 8:28','Romans 12:2','2 Corinthians 5:7',
+  'Galatians 5:22','Ephesians 2:10','Philippians 4:6','Philippians 4:13',
+  'Colossians 3:23','2 Timothy 1:7','Hebrews 11:1','Hebrews 13:5',
+  'James 1:5','1 Peter 5:7','1 John 4:19','Revelation 21:4'
+];
+
+// Fill up to 365
+let fillerIndex = 0;
+while (verses.length < 365) {
+  let ref = fillerVerses[fillerIndex % fillerVerses.length];
+  verses.push({
+    r: ref,
+    t: ref,
+    d: `This day is another invitation to trust God.\nYour journey is being shaped with care.\nHe is present in ordinary moments.\nStrength grows quietly in faith.\nYou are not walking alone.\nGrace is carrying you forward.`
+  });
+  fillerIndex++;
+}
+
+// ---------- GLOBAL STATE ----------
+const today = new Date();
+// Calculate current day number (0 = Jan 1)
+const day = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+// Offset from today (0 = today, -1 = yesterday, +1 = tomorrow)
+let viewOffset = 0;
+
+// DOM elements
+const contentDiv = document.getElementById('content');
+const dateDiv = document.getElementById('date');
+const streakSpan = document.getElementById('streak');
+const progressCircle = document.getElementById('progressCircle');
+const viewIndicator = document.getElementById('viewIndicator');
+const yesterdayBtn = document.getElementById('yesterdayBtn');
+const todayBtn = document.getElementById('todayBtn');
+const tomorrowBtn = document.getElementById('tomorrowBtn');
+
+// ---------- HELPER FUNCTIONS ----------
+function formatDate(date) {
+  return date.toDateString();
+}
+
+function showMilestone(dayNum) {
+  const milestones = [30, 100, 200, 300, 365];
+  if (milestones.includes(dayNum + 1)) {
+    contentDiv.innerHTML = `
+      <div class="card">
+        <h2>🎉 Day ${dayNum + 1}</h2>
+        <div class="verse">You have walked faithfully for ${dayNum + 1} days.</div>
+        <div class="devotional">
+          This journey is shaping your heart in ways you cannot fully see yet.
+          Consistency in small steps creates deep transformation.
+          What you began has become part of your life.
+          Grace has carried you this far and will carry you forward.
+          Today is a reminder that your faith is alive and growing.
+          Keep walking — you are not the same person who started.
+        </div>
+      </div>
+    `;
+    return true;
+  }
+  return false;
+}
+
+// Render a specific day (0-indexed) into the main card.
+// skipMilestone: if true, do not show milestone card (used for yesterday/tomorrow)
+function renderDay(dayIndex, skipMilestone = false) {
+  // Wrap around 0-364
+  const wrapped = (dayIndex + 365) % 365;
+  const v = verses[wrapped];
+
+  if (!skipMilestone && showMilestone(dayIndex)) {
+    // milestone card already set
+    return;
+  }
+
+  let html = `
+    <div class="card" id="shareContent">
+      <div class="ref">${v.r}</div>
+      <div class="verse">${v.t}</div>
+      <div class="devotional">${v.d}</div>
+    </div>
+  `;
+
+  // Preview tomorrow's verse (only if we are showing today's view, i.e., offset 0)
+  const midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const previewTime = new Date(midnight.getTime() - 3 * 60 * 60 * 1000); // 3 hours before midnight
+
+  if (viewOffset === 0 && today >= previewTime) {
+    const nextIndex = (day + 1) % 365;
+    const nextVerse = verses[nextIndex];
+    html += `<div class="card pixel"><p>${nextVerse.t}</p></div>`;
+  }
+
+  contentDiv.innerHTML = html;
+}
+
+// Update the indicator that shows if we are viewing another day
+function updateViewIndicator() {
+  if (viewOffset === 0) {
+    viewIndicator.classList.add('hidden');
+  } else {
+    viewIndicator.classList.remove('hidden');
+    const dayWord = viewOffset === -1 ? 'Yesterday' : 'Tomorrow';
+    const actualDayNum = day + viewOffset;
+    // day numbers are 0-indexed, so display +1
+    viewIndicator.textContent = `${dayWord} (Day ${actualDayNum + 1})`;
+  }
+}
+
+// Refresh the view based on current offset
+function refreshView() {
+  renderDay(day + viewOffset, viewOffset !== 0); // skip milestone if not today
+  updateViewIndicator();
+}
+
+// Reset to today
+function resetToToday() {
+  viewOffset = 0;
+  refreshView();
+}
+
+// ---------- INITIAL SETUP ----------
+dateDiv.innerText = formatDate(today);
+
+// Streak
+let last = localStorage.getItem('lastDay');
+let streak = parseInt(localStorage.getItem('streak')) || 0;
+if (last != day) {
+  streak++;
+  localStorage.setItem('streak', streak);
+  localStorage.setItem('lastDay', day);
+}
+streakSpan.innerText = streak;
+
+// Progress ring
+const percent = Math.min((day + 1) / 365, 1);
+progressCircle.style.strokeDashoffset = 163 - (163 * percent);
+
+// Show/hide tomorrow button based on time
+const now = new Date();
+const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+if (now < midnight) {
+  // still today, hide tomorrow button
+  tomorrowBtn.classList.add('hidden');
+} else {
+  // after midnight, show tomorrow button
+  tomorrowBtn.classList.remove('hidden');
+}
+
+// Load today's verse
+refreshView();
+
+// ---------- NAVIGATION BUTTONS ----------
+yesterdayBtn.addEventListener('click', () => {
+  viewOffset = -1;
+  refreshView();
+});
+
+todayBtn.addEventListener('click', resetToToday);
+
+tomorrowBtn.addEventListener('click', () => {
+  viewOffset = 1;
+  refreshView();
+});
+
+// ---------- MIDNIGHT AUTO-REFRESH ----------
+function scheduleMidnightRefresh() {
+  const now = new Date();
+  const midnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0, 0, 0, 0
+  );
+  const timeUntilMidnight = midnight - now;
+  if (timeUntilMidnight > 0) {
+    setTimeout(() => {
+      location.reload();
+    }, timeUntilMidnight);
+  }
+}
+scheduleMidnightRefresh();
+
+// ---------- SHARE FUNCTION ----------
+function shareVerse() {
+  // Always share the verse currently displayed (respects offset)
+  const displayedIndex = (day + viewOffset + 365) % 365;
+  const v = verses[displayedIndex];
+  document.getElementById('shareRef').innerText = v.r;
+  document.getElementById('shareVerseText').innerText = v.t;
+  document.getElementById('shareDevotional').innerText = v.d;
+
+  html2canvas(document.getElementById('shareCard')).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'verse.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  }).catch(err => {
+    console.error('Share image error:', err);
+    alert('Could not generate image. Please try again.');
+  });
+}
+
+// Expose share function globally for the FAB onclick
+window.shareVerse = shareVerse;
+
+</script>
+
+</body>
+</html>
